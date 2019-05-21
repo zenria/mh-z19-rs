@@ -1,0 +1,11 @@
+[package]
+name = "mh-z19"
+version = "0.0.1"
+authors = ["Philippe GASSMANN <philoops@gmail.com>"]
+edition = "2018"
+exclude = [
+    "*.iml",
+]
+license = "MIT OR Apache-2.0"
+
+[dependencies]
