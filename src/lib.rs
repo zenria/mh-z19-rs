@@ -48,7 +48,7 @@ pub fn get_command_packet(command: Command, device_number: u8) -> Vec<u8> {
 
 /// Implementation of the checksum as defined in https://www.winsen-sensor.com/d/files/PDF/Infrared%20Gas%20Sensor/NDIR%20CO2%20SENSOR/MH-Z19%20CO2%20Ver1.0.pdf
 fn checksum(payload: &[u8]) -> u8 {
-    1 + (0xff - payload.iter().fold(0u8, |sum, c| sum.wrapping_add(*c)))
+    1u8.wrapping_add(0xff - payload.iter().fold(0u8, |sum, c| sum.wrapping_add(*c)))
 }
 
 /// Extract the payload from a packet, validating packet length, checksum & header.
