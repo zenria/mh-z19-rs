@@ -1,4 +1,4 @@
-# mh-z12-rs 
+# mh-z19-rs 
 
 Winsen Infrared CO2 Module MH-Z19 serial "api" implementation in Rust. 
 
