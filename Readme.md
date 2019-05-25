@@ -1,4 +1,4 @@
-# mh-z19-rs [![crates.io](https://meritbadge.herokuapp.com/mh-z19)](https://crates.io/crates/mh-z19)
+# mh-z19-rs [![crates.io](https://meritbadge.herokuapp.com/mh-z19)](https://crates.io/crates/mh-z19) [![Build Status](https://travis-ci.org/zenria/mh-z19-rs.svg?branch=master)](https://travis-ci.org/zenria/mh-z19-rs)
 
 Winsen Infrared CO2 Module MH-Z19 serial "api" implementation in Rust. 
 
