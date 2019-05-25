@@ -7,5 +7,6 @@ exclude = [
     "*.iml",
 ]
 license = "MIT OR Apache-2.0"
+repository = "https://github.com/zenria/mh-z19-rs"
 
 [dependencies]
