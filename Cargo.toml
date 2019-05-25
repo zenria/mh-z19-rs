@@ -8,5 +8,6 @@ exclude = [
 ]
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/zenria/mh-z19-rs"
+description = "Implementation of serial protocol for MH-Z19 CO2 sensor"
 
 [dependencies]
