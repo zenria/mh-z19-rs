@@ -52,8 +52,8 @@ fn checksum(payload: &[u8]) -> u8 {
 }
 
 /// Extract the payload from a packet, validating packet length, checksum & header.
-pub fn get_payload(packet: &[u8]) -> Result<&[u8], MHZ12Error> {
-    use MHZ12Error::*;
+pub fn get_payload(packet: &[u8]) -> Result<&[u8], MHZ19Error> {
+    use MHZ19Error::*;
     if packet.len() != 9 {
         return Err(WrongPacketLength(packet.len()));
     }
@@ -72,10 +72,10 @@ pub fn get_payload(packet: &[u8]) -> Result<&[u8], MHZ12Error> {
 }
 
 /// Get the CO2 gas concentration in ppm from a response packet.
-pub fn get_gas_contentration_ppm(packet: &[u8]) -> Result<u32, MHZ12Error> {
+pub fn get_gas_contentration_ppm(packet: &[u8]) -> Result<u32, MHZ19Error> {
     let payload = get_payload(packet)?;
     if payload[0] != Command::ReadGasConcentration.get_command_value() {
-        Err(MHZ12Error::WrongPacketType(
+        Err(MHZ19Error::WrongPacketType(
             Command::ReadGasConcentration.get_command_value(),
             payload[0],
         ))
@@ -85,7 +85,7 @@ pub fn get_gas_contentration_ppm(packet: &[u8]) -> Result<u32, MHZ12Error> {
 }
 
 #[derive(Debug, PartialEq)]
-pub enum MHZ12Error {
+pub enum MHZ19Error {
     /// Packet of bytes has the wrong size
     WrongPacketLength(usize),
     /// Packet of bytes has the wrong checksum
@@ -96,11 +96,11 @@ pub enum MHZ12Error {
     WrongPacketType(u8, u8),
 }
 
-impl std::error::Error for MHZ12Error {}
+impl std::error::Error for MHZ19Error {}
 
-impl fmt::Display for MHZ12Error {
+impl fmt::Display for MHZ19Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use MHZ12Error::*;
+        use MHZ19Error::*;
         match self {
             WrongChecksum(expected, found) => write!(
                 f,
@@ -144,25 +144,25 @@ mod test {
 
     #[test]
     fn test_get_payload() {
-        assert_eq!(Err(MHZ12Error::WrongPacketLength(0)), get_payload(&vec![]));
+        assert_eq!(Err(MHZ19Error::WrongPacketLength(0)), get_payload(&vec![]));
         assert_eq!(
-            Err(MHZ12Error::WrongPacketLength(1)),
+            Err(MHZ19Error::WrongPacketLength(1)),
             get_payload(&vec![12])
         );
         assert_eq!(
-            Err(MHZ12Error::WrongPacketLength(12)),
+            Err(MHZ19Error::WrongPacketLength(12)),
             get_payload(&vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
         );
         assert_eq!(
-            Err(MHZ12Error::WrongStartByte(10)),
+            Err(MHZ19Error::WrongStartByte(10)),
             get_payload(&vec![10, 2, 3, 4, 5, 6, 7, 8, 9])
         );
         assert_eq!(
-            Err(MHZ12Error::WrongChecksum(221, 9)),
+            Err(MHZ19Error::WrongChecksum(221, 9)),
             get_payload(&vec![0xFF, 2, 3, 4, 5, 6, 7, 8, 9])
         );
         assert_eq!(
-            Err(MHZ12Error::WrongChecksum(0xD1, 0x10)),
+            Err(MHZ19Error::WrongChecksum(0xD1, 0x10)),
             get_payload(&vec![0xFF, 0x86, 0x02, 0x60, 0x47, 0x00, 0x00, 0x00, 0x10])
         );
         assert_eq!(
