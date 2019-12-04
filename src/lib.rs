@@ -1,3 +1,15 @@
+//! Winsen Infrared CO2 Module MH-Z19 / MH-Z19B / MH-Z14 serial "api" implementation.
+//!
+//! [MH-Z19 Datasheet](https://www.winsen-sensor.com/d/files/PDF/Infrared%20Gas%20Sensor/NDIR%20CO2%20SENSOR/MH-Z19%20CO2%20Ver1.0.pdf)
+//!
+//! [MH-Z19B Datasheet](https://www.winsen-sensor.com/d/files/infrared-gas-sensor/mh-z19b-co2-ver1_0.pdf)
+//!
+//! [MH-Z14 Dahasheet](https://www.winsen-sensor.com/d/files/infrared-gas-sensor/mh-z14a_co2-manual-v1_01.pdf)
+//!
+//! This crates proposes two kinds of functions:
+//! - functions for parsing response read from the uart
+//! - functions to create command payload to send to the sensor though the uart.
+//!
 use std::fmt;
 
 /// MH-Z12 Commands
@@ -52,6 +64,7 @@ fn get_command_with_bytes34(command: Command, device_number: u8, byte3: u8, byte
     ret
 }
 
+/// Create a command to read the gas concentration of the sensor.
 pub fn read_gas_concentration(device_number: u8) -> Vec<u8> {
     get_command_with_bytes34(Command::ReadGasConcentration, device_number, 0x00, 0x00)
 }
