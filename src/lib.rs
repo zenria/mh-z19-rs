@@ -208,7 +208,6 @@ mod test {
     static READ_GAS_CONCENTRATION_COMMAND_ON_DEV1_PACKET: &'static [u8] =
         &[0xFF, 0x01, 0x86, 0x00, 0x00, 0x00, 0x00, 0x00, 0x79];
 
-
     #[test]
     fn test_checksum() {
         assert_eq!(0x79, checksum(&[0x01, 0x86, 0x00, 0x00, 0x00, 0x00, 0x00]));
@@ -218,6 +217,18 @@ mod test {
 
     #[test]
     fn test_get_payload() {
+        assert_eq!(
+            Err(MHZ19Error::WrongPacketLength(0)),
+            parse_payload(&[])
+        );
+        assert_eq!(
+            Err(MHZ19Error::WrongPacketLength(1)),
+            parse_payload(&[12])
+        );
+        assert_eq!(
+            Err(MHZ19Error::WrongPacketLength(12)),
+            parse_payload(&[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+        );
         assert_eq!(
             Err(MHZ19Error::WrongStartByte(10)),
             parse_payload(&[10, 2, 3, 4, 5, 6, 7, 8, 9])
