@@ -12,3 +12,7 @@ description = "Implementation of serial protocol for Winsen MH-Z19 / MH-Z19B / M
 keywords=["mhz19", "mh-z19", "mh_z19"]
 
 [dependencies]
+
+[features]
+default = []
+std = []
