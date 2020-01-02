@@ -10,6 +10,12 @@
 //! - functions for parsing response read from the uart
 //! - functions to create command payload to send to the sensor though the uart.
 //!
+
+#![cfg_attr(not(feature = "std"), no_std)]
+
+#[cfg(not(feature = "std"))]
+use core::fmt;
+#[cfg(feature = "std")]
 use std::fmt;
 
 /// MH-Z12 Commands
@@ -41,16 +47,12 @@ impl Command {
     }
 }
 
-/// The command payload used to query the co2 cas concentration from the device number 1 (the default device
-/// number)
-///
-/// It is the same value as the result of get_command_packet(Command::ReadGasConcentration, 1).
-pub static READ_GAS_CONCENTRATION_COMMAND_ON_DEV1_PACKET: &'static [u8] =
-    &[0xFF, 0x01, 0x86, 0x00, 0x00, 0x00, 0x00, 0x00, 0x79];
+/// Both input and output packets have 10 byte length
+pub type Packet = [u8; 9];
 
 /// Get the command packet with proper header and checksum.
-fn get_command_with_bytes34(command: Command, device_number: u8, byte3: u8, byte4: u8) -> Vec<u8> {
-    let mut ret = vec![
+fn get_command_with_bytes34(command: Command, device_number: u8, byte3: u8, byte4: u8) -> Packet {
+    let mut ret: Packet = [
         0xFF,
         device_number,
         command.get_command_value(),
@@ -59,18 +61,19 @@ fn get_command_with_bytes34(command: Command, device_number: u8, byte3: u8, byte
         0x00,
         0x00,
         0x00,
+        0x00,
     ];
-    ret.push(checksum(&ret[1..]));
+    ret[8] = checksum(&ret[1..8]);
     ret
 }
 
 /// Create a command to read the gas concentration of the sensor.
-pub fn read_gas_concentration(device_number: u8) -> Vec<u8> {
+pub fn read_gas_concentration(device_number: u8) -> Packet {
     get_command_with_bytes34(Command::ReadGasConcentration, device_number, 0x00, 0x00)
 }
 
 /// Create a command to enable or disable Automatic Baseline Correction (ABC)
-pub fn set_automatic_baseline_correction(device_number: u8, enabled: bool) -> Vec<u8> {
+pub fn set_automatic_baseline_correction(device_number: u8, enabled: bool) -> Packet {
     get_command_with_bytes34(
         Command::SetAutomaticBaselineCorrection,
         device_number,
@@ -85,7 +88,7 @@ pub fn set_automatic_baseline_correction(device_number: u8, enabled: bool) -> Ve
 /// Please make sure the sensor worked under a certain level co2 for over 20 minutes.
 ///
 /// Suggest using 2000ppm as span, at least 1000ppm"
-pub fn calibrate_span_point(device_number: u8, value: u16) -> Vec<u8> {
+pub fn calibrate_span_point(device_number: u8, value: u16) -> Packet {
     get_command_with_bytes34(
         Command::CalibrateSpan,
         device_number,
@@ -97,7 +100,7 @@ pub fn calibrate_span_point(device_number: u8, value: u16) -> Vec<u8> {
 /// Create a command to set the sensor detection range (MH-Z19B only).
 ///
 /// Quoting the datasheet: "Detection range is 2000 or 5000ppm"
-pub fn set_detection_range(device_number: u8, value: u16) -> Vec<u8> {
+pub fn set_detection_range(device_number: u8, value: u16) -> Packet {
     get_command_with_bytes34(
         Command::SetSensorDetectionRange,
         device_number,
@@ -110,7 +113,7 @@ pub fn set_detection_range(device_number: u8, value: u16) -> Vec<u8> {
 ///
 /// Quoting the datasheet: "Note：Zero point is 400ppm, please make sure the sensor has
 /// been worked under 400ppm for over 20 minutes"
-pub fn calibrate_zero_point(device_number: u8) -> Vec<u8> {
+pub fn calibrate_zero_point(device_number: u8) -> Packet {
     get_command_with_bytes34(Command::CalibrateZero, device_number, 0x00, 0x00)
 }
 
@@ -166,6 +169,7 @@ pub enum MHZ19Error {
     WrongPacketType(u8, u8),
 }
 
+#[cfg(feature = "std")]
 impl std::error::Error for MHZ19Error {}
 
 impl fmt::Display for MHZ19Error {
@@ -196,62 +200,61 @@ impl fmt::Display for MHZ19Error {
 mod test {
     use super::*;
 
+    /// The command payload used to query the co2 cas concentration
+    /// from the device number 1 (the default device number)
+    ///
+    /// It is the same value as the result of
+    /// get_command_packet(Command::ReadGasConcentration, 1).
+    static READ_GAS_CONCENTRATION_COMMAND_ON_DEV1_PACKET: &'static [u8] =
+        &[0xFF, 0x01, 0x86, 0x00, 0x00, 0x00, 0x00, 0x00, 0x79];
+
     #[test]
     fn test_checksum() {
-        assert_eq!(
-            0x79,
-            checksum(&vec![0x01, 0x86, 0x00, 0x00, 0x00, 0x00, 0x00])
-        );
-        assert_eq!(
-            0xA0,
-            checksum(&vec![0x01, 0x88, 0x07, 0xD0, 0x00, 0x00, 0x00])
-        );
-        assert_eq!(
-            0xD1,
-            checksum(&vec![0x86, 0x02, 0x60, 0x47, 0x00, 0x00, 0x00])
-        );
+        assert_eq!(0x79, checksum(&[0x01, 0x86, 0x00, 0x00, 0x00, 0x00, 0x00]));
+        assert_eq!(0xA0, checksum(&[0x01, 0x88, 0x07, 0xD0, 0x00, 0x00, 0x00]));
+        assert_eq!(0xD1, checksum(&[0x86, 0x02, 0x60, 0x47, 0x00, 0x00, 0x00]));
     }
 
     #[test]
     fn test_get_payload() {
         assert_eq!(
             Err(MHZ19Error::WrongPacketLength(0)),
-            parse_payload(&vec![])
+            parse_payload(&[])
         );
         assert_eq!(
             Err(MHZ19Error::WrongPacketLength(1)),
-            parse_payload(&vec![12])
+            parse_payload(&[12])
         );
         assert_eq!(
             Err(MHZ19Error::WrongPacketLength(12)),
-            parse_payload(&vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+            parse_payload(&[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
         );
         assert_eq!(
             Err(MHZ19Error::WrongStartByte(10)),
-            parse_payload(&vec![10, 2, 3, 4, 5, 6, 7, 8, 9])
+            parse_payload(&[10, 2, 3, 4, 5, 6, 7, 8, 9])
         );
         assert_eq!(
             Err(MHZ19Error::WrongChecksum(221, 9)),
-            parse_payload(&vec![0xFF, 2, 3, 4, 5, 6, 7, 8, 9])
+            parse_payload(&[0xFF, 2, 3, 4, 5, 6, 7, 8, 9])
         );
         assert_eq!(
             Err(MHZ19Error::WrongChecksum(0xD1, 0x10)),
-            parse_payload(&vec![0xFF, 0x86, 0x02, 0x60, 0x47, 0x00, 0x00, 0x00, 0x10])
+            parse_payload(&[0xFF, 0x86, 0x02, 0x60, 0x47, 0x00, 0x00, 0x00, 0x10])
         );
         assert_eq!(
-            Ok(vec![0x86, 0x02, 0x60, 0x47, 0x00, 0x00, 0x00].as_slice()),
-            parse_payload(&vec![0xFF, 0x86, 0x02, 0x60, 0x47, 0x00, 0x00, 0x00, 0xD1])
+            Ok(&[0x86, 0x02, 0x60, 0x47, 0x00, 0x00, 0x00][..]),
+            parse_payload(&[0xFF, 0x86, 0x02, 0x60, 0x47, 0x00, 0x00, 0x00, 0xD1])
         );
     }
 
     #[test]
     fn test_get_command_packet() {
         assert_eq!(
-            vec![0xFF, 0x01, 0x86, 0x00, 0x00, 0x00, 0x00, 0x00, 0x79],
+            [0xFF, 0x01, 0x86, 0x00, 0x00, 0x00, 0x00, 0x00, 0x79],
             get_command_with_bytes34(Command::ReadGasConcentration, 1, 0, 0)
         );
         assert_eq!(
-            Ok(vec![0x01, 0x86, 0x00, 0x00, 0x00, 0x00, 0x00].as_slice()),
+            Ok(&[0x01, 0x86, 0x00, 0x00, 0x00, 0x00, 0x00][..]),
             parse_payload(&get_command_with_bytes34(
                 Command::ReadGasConcentration,
                 1,
@@ -260,11 +263,11 @@ mod test {
             ))
         );
         assert_eq!(
-            Vec::from(READ_GAS_CONCENTRATION_COMMAND_ON_DEV1_PACKET),
+            READ_GAS_CONCENTRATION_COMMAND_ON_DEV1_PACKET,
             get_command_with_bytes34(Command::ReadGasConcentration, 1, 0, 0)
         );
         assert_eq!(
-            Vec::from(READ_GAS_CONCENTRATION_COMMAND_ON_DEV1_PACKET),
+            READ_GAS_CONCENTRATION_COMMAND_ON_DEV1_PACKET,
             read_gas_concentration(1)
         );
 
