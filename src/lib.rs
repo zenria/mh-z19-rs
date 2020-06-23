@@ -92,7 +92,7 @@ pub fn calibrate_span_point(device_number: u8, value: u16) -> Packet {
     get_command_with_bytes34(
         Command::CalibrateSpan,
         device_number,
-        (value & 0xff00 >> 8) as u8,
+        ((value & 0xff00) >> 8) as u8,
         (value & 0xff) as u8,
     )
 }
@@ -104,7 +104,7 @@ pub fn set_detection_range(device_number: u8, value: u16) -> Packet {
     get_command_with_bytes34(
         Command::SetSensorDetectionRange,
         device_number,
-        (value & 0xff00 >> 8) as u8,
+        ((value & 0xff00) >> 8) as u8,
         (value & 0xff) as u8,
     )
 }
@@ -217,14 +217,8 @@ mod test {
 
     #[test]
     fn test_get_payload() {
-        assert_eq!(
-            Err(MHZ19Error::WrongPacketLength(0)),
-            parse_payload(&[])
-        );
-        assert_eq!(
-            Err(MHZ19Error::WrongPacketLength(1)),
-            parse_payload(&[12])
-        );
+        assert_eq!(Err(MHZ19Error::WrongPacketLength(0)), parse_payload(&[]));
+        assert_eq!(Err(MHZ19Error::WrongPacketLength(1)), parse_payload(&[12]));
         assert_eq!(
             Err(MHZ19Error::WrongPacketLength(12)),
             parse_payload(&[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
@@ -288,5 +282,16 @@ mod test {
             super::Command::ReadGasConcentration.get_command_value(),
             read_gas_concentration(1)[2]
         );
+    }
+
+    #[test]
+    fn issue_3_op_precedence() {
+        let p = set_detection_range(1, 0x07D0);
+        assert_eq!(0x07, p[3]);
+        assert_eq!(0xD0, p[4]);
+
+        let p = calibrate_span_point(1, 0x07D0);
+        assert_eq!(0x07, p[3]);
+        assert_eq!(0xD0, p[4]);
     }
 }
