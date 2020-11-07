@@ -47,7 +47,7 @@ impl Command {
     }
 }
 
-/// Both input and output packets have 10 byte length
+/// Both input and output packets have 9 byte length
 pub type Packet = [u8; 9];
 
 /// Get the command packet with proper header and checksum.
