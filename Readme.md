@@ -8,7 +8,7 @@ Winsen Infrared CO2 Module MH-Z19 / MH-Z19B / MH-Z14 serial "api" implementation
 
 [MH-Z14 Dahasheet](https://www.winsen-sensor.com/d/files/infrared-gas-sensor/mh-z14a_co2-manual-v1_01.pdf)
 
-Many thanks to [@kolen](https://github.com/kolen) for contributing to this crate! 
+Many thanks to [@kolen](https://github.com/kolen) and [@mexus](https://github.com/mexus) for contributing to this crate! 
 
 ## License
 
