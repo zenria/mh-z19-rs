@@ -4,7 +4,7 @@
 //!
 //! [MH-Z19B Datasheet](https://www.winsen-sensor.com/d/files/infrared-gas-sensor/mh-z19b-co2-ver1_0.pdf)
 //!
-//! [MH-Z14 Dahasheet](https://www.winsen-sensor.com/d/files/infrared-gas-sensor/mh-z14a_co2-manual-v1_01.pdf)
+//! [MH-Z14 Datasheet](https://www.winsen-sensor.com/d/files/infrared-gas-sensor/mh-z14a_co2-manual-v1_01.pdf)
 //!
 //! This crates proposes two kinds of functions:
 //! - functions for parsing response read from the uart
@@ -145,7 +145,7 @@ pub fn parse_payload(packet: &[u8]) -> Result<&[u8], MHZ19Error> {
 /// Get the CO2 gas concentration in ppm from a response packet.
 ///
 /// Will return an error if the packet is not a "read gas concentration packet"
-pub fn parse_gas_contentration_ppm(packet: &[u8]) -> Result<u32, MHZ19Error> {
+pub fn parse_gas_concentration_ppm(packet: &[u8]) -> Result<u32, MHZ19Error> {
     let payload = parse_payload(packet)?;
     if payload[0] != Command::ReadGasConcentration.get_command_value() {
         Err(MHZ19Error::WrongPacketType(
@@ -155,6 +155,14 @@ pub fn parse_gas_contentration_ppm(packet: &[u8]) -> Result<u32, MHZ19Error> {
     } else {
         Ok(256 * (payload[1] as u32) + (payload[2] as u32))
     }
+}
+
+/// Get the CO2 gas concentration in ppm from a response packet.
+///
+/// Will return an error if the packet is not a "read gas concentration packet"
+#[deprecated = "Please use `parse_gas_concentration_ppm` instead"]
+pub fn parse_gas_contentration_ppm(packet: &[u8]) -> Result<u32, MHZ19Error> {
+    parse_gas_concentration_ppm(packet)
 }
 
 #[derive(Debug, PartialEq)]
